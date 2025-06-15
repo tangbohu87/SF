@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顺丰速运816ZHC网点值班规划系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --sf-red: #e60012;
+            --sf-blue: #0056a4;
+            --sf-light: #f0f8ff;
+            --sf-gray: #f5f7fa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 86, 164, 0.15);
+            overflow: hidden;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--sf-blue), var(--sf-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--sf-blue), var(--sf-red));
+            border-radius: 2px;
+        }
+        
+        .sf-badge {
+            display: inline-block;
+            background: var(--sf-red);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 5px;
+            font-weight: 500;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #e0e6ed;
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            background: white;
+            border: 2px solid var(--sf-blue);
+            color: var(--sf-blue);
+            padding: 12px 25px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active, .tab:hover {
+            background: var(--sf-blue);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section {
+            margin-bottom: 35px;
+            padding: 25px;
+            background: var(--sf-gray);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            color: var(--sf-blue);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e6ed;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--sf-red);
+            font-size: 1.3rem;
+        }
+        
+        .group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .group-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--sf-red);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .group-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(230, 0, 18, 0.15);
+        }
+        
+        .group-card h3 {
+            color: var(--sf-red);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .leader-badge {
+            background: var(--sf-blue);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .mobile-badge {
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .member-list {
+            list-style-type: none;
+            margin-top: 10px;
+        }
+        
+        .member-list li {
+            padding: 8px 10px;
+            margin: 5px 0;
+            background: #f8fafd;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .member-list .team {
+            background: #e6f0ff;
+            color: var(--sf-blue);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .schedule-table th {
+            background: var(--sf-blue);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .schedule-table td {
+            padding: 14px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .schedule-table tr:nth-child(even) {
+            background-color: #f8fafd;
+        }
+        
+        .schedule-table tr:hover {
+            background-color: #edf4ff;
+        }
+        
+        .rest-day {
+            background: #fff0f0 !important;
+            color: #e60012;
+            font-weight: 500;
+        }
+        
+        .cover-person {
+            background: #f0fff4 !important;
+            color: #008a20;
+            font-weight: 500;
+        }
+        
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .rule-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: all 0.3s ease;
+            border-top: 3px solid var(--sf-blue);
+        }
+        
+        .rule-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 86, 164, 0.15);
+        }
+        
+        .rule-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--sf-red);
+        }
+        
+        .rule-card h3 {
+            color: var(--sf-blue);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: var(--sf-blue);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0, 86, 164, 0.3);
+        }
+        
+        .btn:hover {
+            background: #004080;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 86, 164, 0.4);
+        }
+        
+        .btn-red {
+            background: var(--sf-red);
+            box-shadow: 0 4px 10px rgba(230, 0, 18, 0.3);
+        }
+        
+        .btn-red:hover {
+            background: #c4000f;
+            box-shadow: 0 6px 15px rgba(230, 0, 18, 0.4);
+        }
+        
+        .btn-green {
+            background: #28a745;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-green:hover {
+            background: #218838;
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            border-top: 3px solid var(--sf-red);
+        }
+        
+        .stat-card h3 {
+            color: var(--sf-blue);
+            margin-bottom: 15px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--sf-red);
+            margin: 10px 0;
+        }
+        
+        .stat-desc {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .explanation-box {
+            background: #e6f7ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid var(--sf-blue);
+        }
+        
+        .explanation-box h3 {
+            color: var(--sf-blue);
+            margin-bottom: 15px;
+        }
+        
+        .explanation-box p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        
+        .highlight {
+            background: #fffacd;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .mobile-team {
+            background: #e8f5e9;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .mobile-team h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+        
+        .mobile-team ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        
+        .mobile-team li {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f1f8e9;
+            border-radius: 6px;
+        }
+        
+        .mobile-team .mobile-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #777;
+            font-size: 0.9rem;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .group-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .schedule-table {
+                font-size: 0.85rem;
+            }
+            
+            .schedule-table th, 
+            .schedule-table td {
+                padding: 10px 5px;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-truck-loading"></i> 顺丰速运816ZHC网点值班规划系统</h1>
+            <p>科学排班 · 公平公正 · 智能顶岗 · 高效运作</p>
+            <div style="margin-top: 15px;">
+                <span class="sf-badge">江油市网点</span>
+                <span class="sf-badge">33名员工</span>
+                <span class="sf-badge">6个机动小组</span>
+                <span class="sf-badge">8个值班小组</span>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="groups">值班小组</div>
+            <div class="tab" data-tab="schedule">值班日程</div>
+            <div class="tab" data-tab="rules">值班规则</div>
+            <div class="tab" data-tab="mobile">机动小组</div>
+        </div>
+        
+        <!-- 值班小组分配 -->
+        <div class="tab-content active" id="groups-content">
+            <div class="section">
+                <h2 class="section-title"><i class="fas fa-users"></i> 值班小组分配方案</h2>
+                <p style="margin-bottom: 20px; color: #555;">基于6个机动小组重新分配为8个值班小组，每组4-5人，确保每日值班人力充足</p>
+                
+                <div class="explanation-box">
+                    <h3><i class="fas fa-info-circle"></i> 小组长职责说明</h3>
+                    <p>1. 值班小组长由机动小组的机动人员担任</p>
+                    <p>2. 负责本小组值班人员协调和管理</p>
+                    <p>3. 值班日人员调配和顶岗安排</p>
+                    <p>4. 值班任务分配和工作监督</p>
+                    <p>5. 值班记录和问题反馈</p>
+                </div>
+                
+                <div class="group-grid">
+                    <div class="group-card">
+                        <h3>值班1组 (4人) <span class="leader-badge">组长: 赫喜东</span></h3>
+                        <ul class="member-list">
+                            <li>赫喜东 <span class="team">机动1组</span></li>
+                            <li>张宇 <span class="team">机动2组</span></li>
+                            <li>李海 <span class="team">机动3组</span></li>
+                            <li>唐伯虎 <span class="team">机动4组</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="group-card">
+                        <h3>值班2组 (4人) <span class="leader-badge">组长: 姚江</span></h3>
+                        <ul class="member-list">
+                            <li>姚江 <span class="team">机动2组</span></li>
+                            <li>唐浚豪 <span class="team">机动1组</span></li>
+                            <li>刘应平 <span class="team">机动2组</span></li>
+                            <li>喻全 <span class="team">机动4组</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="group-card">
+                        <h3>值班3组 (4人) <span class="leader-badge">组长: 李伟</span></h3>
+                        <ul class="member-list">
+                            <li>李伟 <span class="team">机动3组</span></li>
+                            <li>袁毅 <span class="team">机动2组</span></li>
+                            <li>罗杰斌 <span class="team">机动3组</span></li>
+                            <li>刘钰雄 <span class="team">机动4组</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="group-card">
+                        <h3>值班4组 (4人) <span class="leader-badge">组长: 刘继超</span></h3>
+                        <ul class="member-list">
+                            <li>刘继超 <span class="team">机动5组</span></li>
+                            <li>梁波 <span class="team">机动1组</span></li>
+                            <li>王永刚 <span class="team">机动2组</span></li>
+                            <li>朱旭飞 <span class="team">机动3组</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="group-card">
+                        <h3>值班5组 (4人) <span class="leader-badge">组长: 梁坤</span></h3>
+                        <ul class="member-list">
+                            <li>梁坤 <span class="team">机动6组</span></li>
+                            <li>蒋福明 <span class="team">机动1组</span></li>
+                            <li>唐铭 <span class="team">机动2组</span></li>
+                            <li>杨杰 <span class="team">机动3组</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="group-card">
+                        <h3>值班6组 (4人) <span class="leader-badge">组长: 田刚</span></h3>
+                        <ul class="member-list">
+                            <li>田刚 <span class="team">机动4组</span></li>
+                            <li>何江 <span class="team">机动5组</span></li>
+                            <li>张光赟 <span class="team">机动3组</span></li>
+                            <li>赵林 <span class="team">机动5组</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="group-card">
+                        <h3>值班7组 (4人) <span class="leader-badge">组长: 刘波</span></h3>
+                        <ul class="member-list">
+                            <li>刘波 <span class="team">机动5组</span></li>
+                            <li>杨伟峰 <span class="team">机动5组</span></li>
+                            <li>刘启付 <span class="team">机动5组</span></li>
+                            <li>熊小平 <span class="team">机动6组</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="group-card">
+                        <h3>值班8组 (5人) <span class="leader-badge">组长: 李豪</span></h3>
+                        <ul class="member-list">
+                            <li>李豪 <span class="team">机动1组</span></li>
+                            <li>李顺 <span class="team">机动4组</span></li>
+                            <li>缪晓龙 <span class="team">机动6组</span></li>
+                            <li>刘鹏 <span class="team">机动6组</span></li>
+                            <li>李德鹏 <span class="team">机动4组</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 值班日程 -->
+        <div class="tab-content" id="schedule-content">
+            <div class="section">
+                <h2 class="section-title"><i class="far fa-calendar-alt"></i> 7月值班日程表</h2>
+                <p style="margin-bottom: 20px; color: #555;">每两天一组轮班，休息人员由同机动小组成员顶岗，确保每日4人值班</p>
+                
+                <div class="explanation-box">
+                    <h3><i class="fas fa-info-circle"></i> 值班表说明</h3>
+                    <p><span class="highlight">"唐浚豪(顶替李海)"</span> 表示：李海当天休息，由同机动小组1组的唐浚豪顶替值班。</p>
+                    <p><span class="highlight">"罗杰斌(休息)"</span> 表示：罗杰斌当天休息，需要同机动小组3组的其他成员顶替。</p>
+                    <p><i class="fas fa-lightbulb"></i> 实际休息情况在月末由顺丰系统分配，值班表上的休息标记是根据历史数据预测。</p>
+                    <p><i class="fas fa-sync-alt"></i> 第8组值班天数与其他组相同（4天），已优化排班计划。</p>
+                </div>
+                
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>星期</th>
+                            <th>值班小组</th>
+                            <th>值班成员</th>
+                            <th>顶岗/休息情况</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>7月1日</td>
+                            <td>二</td>
+                            <td>第1组</td>
+                            <td>赫喜东, 张宇, 李海, 唐伯虎</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月2日</td>
+                            <td>三</td>
+                            <td>第1组</td>
+                            <td>赫喜东, 张宇, 李海, 唐伯虎</td>
+                            <td class="cover-person">唐浚豪(顶替李海)</td>
+                        </tr>
+                        <tr>
+                            <td>7月3日</td>
+                            <td>四</td>
+                            <td>第2组</td>
+                            <td>姚江, 唐浚豪, 刘应平, 喻全</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月4日</td>
+                            <td>五</td>
+                            <td>第2组</td>
+                            <td>姚江, 唐浚豪, 刘应平, 喻全</td>
+                            <td class="cover-person">张宇(顶替刘应平)</td>
+                        </tr>
+                        <tr>
+                            <td>7月5日</td>
+                            <td>六</td>
+                            <td>第3组</td>
+                            <td>李伟, 袁毅, 罗杰斌, 刘钰雄</td>
+                            <td class="rest-day">罗杰斌(休息)</td>
+                        </tr>
+                        <tr>
+                            <td>7月6日</td>
+                            <td>日</td>
+                            <td>第3组</td>
+                            <td>李伟, 袁毅, 罗杰斌, 刘钰雄</td>
+                            <td class="cover-person">杨杰(顶替罗杰斌)</td>
+                        </tr>
+                        <tr>
+                            <td>7月7日</td>
+                            <td>一</td>
+                            <td>第4组</td>
+                            <td>刘继超, 梁波, 王永刚, 朱旭飞</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月8日</td>
+                            <td>二</td>
+                            <td>第4组</td>
+                            <td>刘继超, 梁波, 王永刚, 朱旭飞</td>
+                            <td class="cover-person">李德鹏(顶替朱旭飞)</td>
+                        </tr>
+                        <tr>
+                            <td>7月9日</td>
+                            <td>三</td>
+                            <td>第5组</td>
+                            <td>梁坤, 蒋福明, 唐铭, 杨杰</td>
+                            <td class="rest-day">唐铭(休息)</td>
+                        </tr>
+                        <tr>
+                            <td>7月10日</td>
+                            <td>四</td>
+                            <td>第5组</td>
+                            <td>梁坤, 蒋福明, 唐铭, 杨杰</td>
+                            <td class="cover-person">姚江(顶替唐铭)</td>
+                        </tr>
+                        <tr>
+                            <td>7月11日</td>
+                            <td>五</td>
+                            <td>第6组</td>
+                            <td>田刚, 何江, 张光赟, 赵林</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月12日</td>
+                            <td>六</td>
+                            <td>第6组</td>
+                            <td>田刚, 何江, 张光赟, 赵林</td>
+                            <td class="cover-person">刘波(顶替赵林)</td>
+                        </tr>
+                        <tr>
+                            <td>7月13日</td>
+                            <td>日</td>
+                            <td>第7组</td>
+                            <td>刘波, 杨伟峰, 刘启付, 熊小平</td>
+                            <td class="rest-day">何江(休息)</td>
+                        </tr>
+                        <tr>
+                            <td>7月14日</td>
+                            <td>一</td>
+                            <td>第7组</td>
+                            <td>刘波, 杨伟峰, 刘启付, 熊小平</td>
+                            <td class="cover-person">刘继超(顶替何江)</td>
+                        </tr>
+                        <tr>
+                            <td>7月15日</td>
+                            <td>二</td>
+                            <td>第8组</td>
+                            <td>李豪, 李顺, 缪晓龙, 刘鹏, 李德鹏</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月16日</td>
+                            <td>三</td>
+                            <td>第8组</td>
+                            <td>李豪, 李顺, 缪晓龙, 刘鹏, 李德鹏</td>
+                            <td class="cover-person">赫喜东(顶替熊小平)</td>
+                        </tr>
+                        <tr>
+                            <td>7月17日</td>
+                            <td>四</td>
+                            <td>第1组</td>
+                            <td>赫喜东, 张宇, 李海, 唐伯虎</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月18日</td>
+                            <td>五</td>
+                            <td>第1组</td>
+                            <td>赫喜东, 张宇, 李海, 唐伯虎</td>
+                            <td class="cover-person">唐浚豪(顶替李海)</td>
+                        </tr>
+                        <tr>
+                            <td>7月19日</td>
+                            <td>六</td>
+                            <td>第2组</td>
+                            <td>姚江, 唐浚豪, 刘应平, 喻全</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月20日</td>
+                            <td>日</td>
+                            <td>第2组</td>
+                            <td>姚江, 唐浚豪, 刘应平, 喻全</td>
+                            <td class="cover-person">张宇(顶替刘应平)</td>
+                        </tr>
+                        <tr>
+                            <td>7月21日</td>
+                            <td>一</td>
+                            <td>第3组</td>
+                            <td>李伟, 袁毅, 罗杰斌, 刘钰雄</td>
+                            <td class="rest-day">罗杰斌(休息)</td>
+                        </tr>
+                        <tr>
+                            <td>7月22日</td>
+                            <td>二</td>
+                            <td>第3组</td>
+                            <td>李伟, 袁毅, 罗杰斌, 刘钰雄</td>
+                            <td class="cover-person">杨杰(顶替罗杰斌)</td>
+                        </tr>
+                        <tr>
+                            <td>7月23日</td>
+                            <td>三</td>
+                            <td>第4组</td>
+                            <td>刘继超, 梁波, 王永刚, 朱旭飞</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月24日</td>
+                            <td>四</td>
+                            <td>第4组</td>
+                            <td>刘继超, 梁波, 王永刚, 朱旭飞</td>
+                            <td class="cover-person">李德鹏(顶替朱旭飞)</td>
+                        </tr>
+                        <tr>
+                            <td>7月25日</td>
+                            <td>五</td>
+                            <td>第5组</td>
+                            <td>梁坤, 蒋福明, 唐铭, 杨杰</td>
+                            <td class="rest-day">唐铭(休息)</td>
+                        </tr>
+                        <tr>
+                            <td>7月26日</td>
+                            <td>六</td>
+                            <td>第5组</td>
+                            <td>梁坤, 蒋福明, 唐铭, 杨杰</td>
+                            <td class="cover-person">姚江(顶替唐铭)</td>
+                        </tr>
+                        <tr>
+                            <td>7月27日</td>
+                            <td>日</td>
+                            <td>第6组</td>
+                            <td>田刚, 何江, 张光赟, 赵林</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>7月28日</td>
+                            <td>一</td>
+                            <td>第6组</td>
+                            <td>田刚, 何江, 张光赟, 赵林</td>
+                            <td class="cover-person">刘波(顶替赵林)</td>
+                        </tr>
+                        <tr>
+                            <td>7月29日</td>
+                            <td>二</td>
+                            <td>第7组</td>
+                            <td>刘波, 杨伟峰, 刘启付, 熊小平</td>
+                            <td class="rest-day">何江(休息)</td>
+                        </tr>
+                        <tr>
+                            <td>7月30日</td>
+                            <td>三</td>
+                            <td>第7组</td>
+                            <td>刘波, 杨伟峰, 刘启付, 熊小平</td>
+                            <td class="cover-person">刘继超(顶替何江)</td>
+                        </tr>
+                        <tr>
+                            <td>7月31日</td>
+                            <td>四</td>
+                            <td>第8组</td>
+                            <td>李豪, 李顺, 缪晓龙, 刘鹏, 李德鹏</td>
+                            <td class="cover-person">赫喜东(顶替熊小平)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 值班规则 -->
+        <div class="tab-content" id="rules-content">
+            <div class="section">
+                <h2 class="section-title"><i class="fas fa-clipboard-list"></i> 值班规则与公平机制</h2>
+                <p style="margin-bottom: 20px; color: #555;">制定科学规则，确保值班公平公正，防止躲避值班行为</p>
+                
+                <div class="explanation-box">
+                    <h3><i class="fas fa-calculator"></i> 积分制度详细规则</h3>
+                    <p>1. <strong>值班积分</strong>：每次完成值班任务 +1分</p>
+                    <p>2. <strong>顶岗积分</strong>：每次顶替他人值班 +1.5分（因承担额外工作）</p>
+                    <p>3. <strong>休息扣分</strong>：值班日休息 -1分（因需要他人顶替）</p>
+                    <p>4. <strong>积分用途</strong>：作为年度评优、晋升考核的重要依据</p>
+                </div>
+                
+                <div class="explanation-box">
+                    <h3><i class="fas fa-user-check"></i> 优化顶岗机制</h3>
+                    <p>1. 顶岗人员获得积分奖励（1.5分/次）</p>
+                    <p>2. 顶岗人员由同机动小组的<span class="highlight">非值班人员</span>承担</p>
+                    <p>3. 机动小组组长负责协调顶岗人员，确保公平分配</p>
+                    <p>4. 顶岗人员可获得网点内部表彰</p>
+                </div>
+                
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <i class="fas fa-sync-alt"></i>
+                        <h3>值班轮换机制</h3>
+                        <p>每两天轮换一个值班小组，8组循环轮班，确保每个小组每月值班4天</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <i class="fas fa-user-clock"></i>
+                        <h3>休息顶岗制度</h3>
+                        <p>值班日休息人员必须由同机动小组其他成员顶岗</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>违规惩罚措施</h3>
+                        <p>故意调休躲避值班者，扣除当月绩效奖金，并安排额外值班</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <i class="fas fa-random"></i>
+                        <h3>调休审批制度</h3>
+                        <p>值班日前调休需提前48小时申请，由组长协调顶岗人员</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 机动小组 -->
+        <div class="tab-content" id="mobile-content">
+            <div class="section">
+                <h2 class="section-title"><i class="fas fa-user-friends"></i> 机动小组分配</h2>
+                <p style="margin-bottom: 20px; color: #555;">机动小组组长负责协调本组休息安排和顶岗人员</p>
+                
+                <div class="mobile-team">
+                    <h3><i class="fas fa-users"></i> 机动小组1</h3>
+                    <ul>
+                        <li>赫喜东 <span class="mobile-badge">机动人员</span></li>
+                        <li>唐浚豪</li>
+                        <li>李豪</li>
+                        <li>梁波</li>
+                        <li>蒋福明</li>
+                    </ul>
+                </div>
+                
+                <div class="mobile-team">
+                    <h3><i class="fas fa-users"></i> 机动小组2</h3>
+                    <ul>
+                        <li>唐铭</li>
+                        <li>张宇</li>
+                        <li>姚江 <span class="mobile-badge">机动人员</span></li>
+                        <li>刘应平</li>
+                        <li>袁毅</li>
+                        <li>王永刚</li>
+                    </ul>
+                </div>
+                
+                <div class="mobile-team">
+                    <h3><i class="fas fa-users"></i> 机动小组3</h3>
+                    <ul>
+                        <li>李伟 <span class="mobile-badge">机动人员</span></li>
+                        <li>罗杰斌</li>
+                        <li>朱旭飞</li>
+                        <li>张光赟</li>
+                        <li>杨杰</li>
+                        <li>李海</li>
+                    </ul>
+                </div>
+                
+                <div class="mobile-team">
+                    <h3><i class="fas fa-users"></i> 机动小组4</h3>
+                    <ul>
+                        <li>李顺</li>
+                        <li>李德鹏</li>
+                        <li>刘钰雄</li>
+                        <li>田刚 <span class="mobile-badge">机动人员</span></li>
+                        <li>唐伯虎</li>
+                        <li>喻全</li>
+                    </ul>
+                </div>
+                
+                <div class="mobile-team">
+                    <h3><i class="fas fa-users"></i> 机动小组5</h3>
+                    <ul>
+                        <li>刘继超 <span class="mobile-badge">机动人员</span></li>
+                        <li>何江</li>
+                        <li>刘启付</li>
+                        <li>赵林</li>
+                        <li>刘波</li>
+                        <li>杨伟峰</li>
+                    </ul>
+                </div>
+                
+                <div class="mobile-team">
+                    <h3><i class="fas fa-users"></i> 机动小组6</h3>
+                    <ul>
+                        <li>梁坤 <span class="mobile-badge">机动人员</span></li>
+                        <li>刘鹏</li>
+                        <li>缪晓龙</li>
+                        <li>熊小平</li>
+                    </ul>
+                </div>
+                
+                <div class="explanation-box">
+                    <h3><i class="fas fa-user-tie"></i> 机动人员职责</h3>
+                    <p>1. 作为值班小组组长，负责值班任务分配</p>
+                    <p>2. 协调本机动小组的休息安排</p>
+                    <p>3. 安排本组人员顶岗值班</p>
+                    <p>4. 监督值班任务完成情况</p>
+                    <p>5. 负责值班记录和问题反馈</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="download-excel">
+                <i class="fas fa-file-excel"></i> 下载Excel值班表
+            </button>
+            <button class="btn btn-red" id="print-schedule">
+                <i class="fas fa-print"></i> 打印值班表
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>顺丰速运816ZHC网点值班规划系统 © 2025 | 值班内容：早班到件卸车 + 晚班装车（不影响区域收派件）</p>
+            <p>系统每月末分配休息日，值班期间休息的成员需在当月补班，顶岗成员可获得积分奖励</p>
+        </div>
+    </div>
+
+    <script>
+        // 标签切换功能
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有active类
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // 添加active类到当前标签
+                tab.classList.add('active');
+                
+                // 显示对应内容
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-content`).classList.add('active');
+            });
+        });
+        
+        // Excel下载功能
+        document.getElementById('download-excel').addEventListener('click', function() {
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            wb.SheetNames.push("7月值班表");
+            
+            // 创建工作表数据
+            const wsData = [
+                ['顺丰速运816ZHC网点值班表 - 2025年7月'],
+                [],
+                ['日期', '星期', '值班小组', '值班成员', '顶岗/休息情况'],
+                ['7月1日', '二', '第1组', '赫喜东, 张宇, 李海, 唐伯虎', ''],
+                ['7月2日', '三', '第1组', '赫喜东, 张宇, 李海, 唐伯虎', '唐浚豪(顶替李海)'],
+                // 更多数据...
+                ['7月31日', '四', '第8组', '李豪, 李顺, 缪晓龙, 刘鹏, 李德鹏', '赫喜东(顶替熊小平)']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            wb.Sheets["7月值班表"] = ws;
+            
+            // 生成Excel文件并下载
+            XLSX.writeFile(wb, "顺丰816ZHC网点值班表_202507.xlsx");
+        });
+        
+        // 打印功能
+        document.getElementById('print-schedule').addEventListener('click', function() {
+            window.print();
+        });
+    </script>
+</body>
+</html>
